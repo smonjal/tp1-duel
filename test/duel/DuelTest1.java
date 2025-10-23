@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import duel.exception.DeadDuelistException;
 
-class DuelTest {
+class DuelTest1 {
 
 	/* Duel Constructor Tests */
 	/* ====================== */
@@ -24,25 +24,22 @@ class DuelTest {
 		deadDuelist.isAlive = false;
 		
 		return Stream.of(
-						Arguments.of("Attaquant mort", deadDuelist, new DuelistMock(), Duel.ATTACKER_DEAD_EXCEPTION_MESSAGE),
-						Arguments.of("Défenseur mort", new DuelistMock(), deadDuelist, Duel.DEFENDER_DEAD_EXCEPTION_MESSAGE),
-						Arguments.of("Attaquant et défenseur morts", deadDuelist, deadDuelist, Duel.ATTACKER_DEAD_EXCEPTION_MESSAGE)
+						Arguments.of(deadDuelist, new DuelistMock(), Duel.ATTACKER_DEAD_EXCEPTION_MESSAGE),
+						Arguments.of(new DuelistMock(), deadDuelist, Duel.DEFENDER_DEAD_EXCEPTION_MESSAGE),
+						Arguments.of(deadDuelist, deadDuelist, Duel.ATTACKER_DEAD_EXCEPTION_MESSAGE)
 						);
 	}		
 	@ParameterizedTest
 	@MethodSource("provideDeadDuelists_toValidateDuel")
-	void whenCreatingDuel_ifAtLeastOneDuelistIsDead_thenDeadDuelistExceptionIsThrown(String description, Duelist attacker, Duelist defender, String exceptionMessage) {
+	void whenCreatingDuel_ifAtLeastOneDuelistIsDead_thenDeadDuelistExceptionIsThrown(Duelist attacker, Duelist defender, String exceptionMessage) {
 		DeadDuelistException ex = Assertions.assertThrows(DeadDuelistException.class, () -> new Duel(attacker, defender));
 		Assertions.assertEquals(exceptionMessage, ex.getMessage());
 	}
 	
-	/* Fight Method Tests */
+	/* Fight Method Test */
 	/* ================= */
-	
-	// Attacker > Defender
-	
 	@Test
-	void whenFightingDuel_withAttackerStronger_thenAttackerWinsAndDefenderLoses() {
+	void whenFightingDuel_ifAttackerIsStronger_thenAttackerIsWinner() {
 		DuelistMock attacker = new DuelistMock(1000);
 		DuelistMock defender = new DuelistMock(200);	
 		Duel duel = new Duel(attacker, defender);
@@ -51,28 +48,15 @@ class DuelTest {
 		duel.fight(prizeSkill); 
 		
 		Assertions.assertTrue(attacker.hasRewardMethodBeenCalled);
-		Assertions.assertFalse(attacker.hasPenalizeMethodBeenCalled);
-		
-		Assertions.assertTrue(defender.hasPenalizeMethodBeenCalled);
-		Assertions.assertFalse(defender.hasRewardMethodBeenCalled);
-	}
-	
-	@Test
-	void whenFightingDuel_withAttackerStronger_thenAttackerIsRewarded() {
-		DuelistMock attacker = new DuelistMock(1000);
-		DuelistMock defender = new DuelistMock(200);	
-		Duel duel = new Duel(attacker, defender);
-		Skill prizeSkill = new SkillMock();
-		
-		duel.fight(prizeSkill); 
-		
 		Assertions.assertEquals(1,  attacker.rewardMethodeCallCounter);
 		Assertions.assertEquals(Duel.REWARD_POINTS, attacker.rewardPoints);
 		Assertions.assertSame(prizeSkill, attacker.rewardSkill);
+	
+		Assertions.assertFalse(attacker.hasPenalizeMethodBeenCalled);
 	}
 	
 	@Test
-	void whenFightingDuel_withAttackerStronger_thenDefenderIsPenalized() {
+	void whenFightingDuel_ifAttackerIsStronger_thenDefenderIsLoser() {
 		DuelistMock attacker = new DuelistMock(1000);
 		DuelistMock defender = new DuelistMock(200);	
 		int duelEffect = 1000 - 200;
@@ -81,15 +65,16 @@ class DuelTest {
 		
 		duel.fight(prizeSkill); 
 		
+		Assertions.assertTrue(defender.hasPenalizeMethodBeenCalled);
 		Assertions.assertEquals(1,  defender.penalizeMethodeCallCounter);
 		Assertions.assertEquals(Duel.PENALTY_POINTS, defender.penaltyPoints);
 		Assertions.assertEquals(duelEffect, defender.healthPointsLost);	
+		
+		Assertions.assertFalse(defender.hasRewardMethodBeenCalled);
 	}
-	
-	// Defender > Attacker
 
 	@Test
-	void whenFightingDuel_withDefenderStronger_thenDefenderWinsAndAttackerLoses() {
+	void whenFightingDuel_ifDefenderIsStronger_thenDefenderIsWinner() {
 		DuelistMock attacker = new DuelistMock(300);
 		DuelistMock defender = new DuelistMock(1550);	
 		Duel duel = new Duel(attacker, defender);
@@ -98,28 +83,15 @@ class DuelTest {
 		duel.fight(prizeSkill); 
 		
 		Assertions.assertTrue(defender.hasRewardMethodBeenCalled);
-		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);
-		
-		Assertions.assertTrue(attacker.hasPenalizeMethodBeenCalled);
-		Assertions.assertFalse(attacker.hasRewardMethodBeenCalled);		
-	}
-	
-	@Test
-	void whenFightingDuel_withDefenderStronger_thenDefenderIsRewarded() {
-		DuelistMock attacker = new DuelistMock(300);
-		DuelistMock defender = new DuelistMock(1550);	
-		Duel duel = new Duel(attacker, defender);
-		Skill prizeSkill = new SkillMock();
-		
-		duel.fight(prizeSkill); 
-		
 		Assertions.assertEquals(1,  defender.rewardMethodeCallCounter);
 		Assertions.assertEquals(Duel.REWARD_POINTS, defender.rewardPoints);
 		Assertions.assertSame(prizeSkill, defender.rewardSkill);
+		
+		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);
 	}
 	
 	@Test
-	void whenFightingDuel_withDefenderStronger_thenAttackerIsPenalized() {
+	void whenFightingDuel_ifDefenderIsStronger_thenAttackerIsLoser() {
 		DuelistMock attacker = new DuelistMock(300);
 		DuelistMock defender = new DuelistMock(1550);	
 		int duelEffect = 1550 - 300;
@@ -128,15 +100,16 @@ class DuelTest {
 		
 		duel.fight(prizeSkill); 
 		
+		Assertions.assertTrue(attacker.hasPenalizeMethodBeenCalled);
 		Assertions.assertEquals(1,  attacker.penalizeMethodeCallCounter);
 		Assertions.assertEquals(Duel.PENALTY_POINTS, attacker.penaltyPoints);
 		Assertions.assertEquals(duelEffect, attacker.healthPointsLost);	
+		
+		Assertions.assertFalse(attacker.hasRewardMethodBeenCalled);		
 	}
 	
-	// Defender = Attacker
-
 	@Test
-	void whenFightingDuel_withDefenderSameStrongThanAttacker_thenDefenderWinsAndAttackerLoses() {
+	void whenFightingDuel_ifDefenderIsSameStrongThanAttacker_thenDefenderIsWinner() {
 		DuelistMock attacker = new DuelistMock(888);
 		DuelistMock defender = new DuelistMock(888);
 		Duel duel = new Duel(attacker, defender);
@@ -145,28 +118,15 @@ class DuelTest {
 		duel.fight(prizeSkill); 
 		
 		Assertions.assertTrue(defender.hasRewardMethodBeenCalled);
-		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);
-		
-		Assertions.assertTrue(attacker.hasPenalizeMethodBeenCalled);
-		Assertions.assertFalse(attacker.hasRewardMethodBeenCalled);	
-	}
-	
-	@Test
-	void whenFightingDuel_withDefenderSameStrongThanAttacker_thenDefenderIsRewarded() {
-		DuelistMock attacker = new DuelistMock(888);
-		DuelistMock defender = new DuelistMock(888);
-		Duel duel = new Duel(attacker, defender);
-		Skill prizeSkill = new SkillMock(); 
-		
-		duel.fight(prizeSkill); 
-		
 		Assertions.assertEquals(1,  defender.rewardMethodeCallCounter);
 		Assertions.assertEquals(Duel.REWARD_POINTS, defender.rewardPoints);
-		Assertions.assertSame(prizeSkill, defender.rewardSkill);	
+		Assertions.assertSame(prizeSkill, defender.rewardSkill);
+		
+		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);		
 	}
 	
 	@Test
-	void whenFightingDuel_withDefenderSameStrongThanAttacker_thenAttackerIsPenalized() {
+	void whenFightingDuel_ifDefenderIsSameStrongThanAttacker_thenAttackerIsLoser() {
 		DuelistMock attacker = new DuelistMock(888);
 		DuelistMock defender = new DuelistMock(888);
 		int duelEffect = 888 - 888;
@@ -174,53 +134,52 @@ class DuelTest {
 		Skill prizeSkill = new SkillMock(); 
 		
 		duel.fight(prizeSkill); 
-
+		
+		Assertions.assertTrue(attacker.hasPenalizeMethodBeenCalled);
 		Assertions.assertEquals(1,  attacker.penalizeMethodeCallCounter);
 		Assertions.assertEquals(Duel.PENALTY_POINTS, attacker.penaltyPoints);
-		Assertions.assertEquals(duelEffect, attacker.healthPointsLost);			
+		Assertions.assertEquals(duelEffect, attacker.healthPointsLost);	
+		
+		Assertions.assertFalse(attacker.hasRewardMethodBeenCalled);			
 	}	
 	
-	// Capitulation of Attacker
-
 	private static Stream<Arguments> provideDuelist_toMakeAttackerCapitulate() {
 		return Stream.of(
-				Arguments.of("Attaquant capitule", new DuelistMock(true), new DuelistMock()),
-				Arguments.of("Attaquant et défenseur capitulent", new DuelistMock(true), new DuelistMock(true))
+				Arguments.of(new DuelistMock(true), new DuelistMock()),
+				Arguments.of(new DuelistMock(true), new DuelistMock(true))
 						);		
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideDuelist_toMakeAttackerCapitulate")
-	void whenFightingDuel_withCapitulationOfAttacker_thenDefenderWinsAndAttackerDoesNotLose(String description, DuelistMock attacker, DuelistMock defender) {
+	void whenFightingDuel_ifAttackerCapitulates_thenDefenderReceivesRewards(DuelistMock attacker, DuelistMock defender) {
 		Duel duel = new Duel(attacker, defender);
 		Skill prizeSkill = new SkillMock();
 		
 		duel.fight(prizeSkill); 
 		
 		Assertions.assertTrue(defender.hasRewardMethodBeenCalled);
-		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);
+		Assertions.assertEquals(1,  defender.rewardMethodeCallCounter);
+		Assertions.assertEquals(Duel.REWARD_POINTS, defender.rewardPoints);
+		Assertions.assertSame(prizeSkill, defender.rewardSkill);	
 		
-		Assertions.assertFalse(attacker.hasPenalizeMethodBeenCalled);	
-		Assertions.assertFalse(attacker.hasRewardMethodBeenCalled);	
+		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);	
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideDuelist_toMakeAttackerCapitulate")
-	void whenFightingDuel_withCapitulationOfAttacker_thenDefenderIsRewarded(String description, DuelistMock attacker, DuelistMock defender) {
+	void whenFightingDuel_ifAttackerCapitulates_thenAttackerIsNotPenalized(DuelistMock attacker, DuelistMock defender) {
 		Duel duel = new Duel(attacker, defender);
 		Skill prizeSkill = new SkillMock();
 		
 		duel.fight(prizeSkill); 
 		
-		Assertions.assertEquals(1,  defender.rewardMethodeCallCounter);
-		Assertions.assertEquals(Duel.REWARD_POINTS, defender.rewardPoints);		Assertions.assertSame(prizeSkill, defender.rewardSkill);	
-	
+		Assertions.assertFalse(attacker.hasPenalizeMethodBeenCalled);	
+		Assertions.assertFalse(attacker.hasRewardMethodBeenCalled);			
 	}
 	
-	// Capitulation of Defender
-	
 	@Test
-	void whenFightingDuel_withCapitulationOfDefender_thenAttackerWinsAndDefenderDoesNotLose() {
+	void whenFightingDuel_ifDefenderCapitulates_thenAttackerReceivesOnlyTheRewardSkill() {
 		DuelistMock attacker = new DuelistMock();
 		DuelistMock defender = new DuelistMock(true);
 		Duel duel = new Duel(attacker, defender);
@@ -229,14 +188,15 @@ class DuelTest {
 		duel.fight(prizeSkill); 
 		
 		Assertions.assertTrue(attacker.hasRewardMethodBeenCalled);
+		Assertions.assertEquals(1,  attacker.rewardMethodeCallCounter);
+		Assertions.assertEquals(Duel.NO_REWARD_POINTS, attacker.rewardPoints);
+		Assertions.assertSame(prizeSkill, attacker.rewardSkill);	
+		
 		Assertions.assertFalse(attacker.hasPenalizeMethodBeenCalled);
-		
-		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);	
-		Assertions.assertFalse(defender.hasRewardMethodBeenCalled);	
-	}	
-		
+	}
+	
 	@Test
-	void whenFightingDuel_withCapitulationOfDefender_thenAttackerIsRewardedOnlyWithTheRewardSkill() {
+	void whenFightingDuel_ifDefenderCapitulates_thenDefenderIsNotPenalized() {
 		DuelistMock attacker = new DuelistMock();
 		DuelistMock defender = new DuelistMock(true);
 		Duel duel = new Duel(attacker, defender);
@@ -244,9 +204,8 @@ class DuelTest {
 		
 		duel.fight(prizeSkill); 
 		
-		Assertions.assertEquals(1,  attacker.rewardMethodeCallCounter);
-		Assertions.assertEquals(Duel.NO_REWARD_POINTS, attacker.rewardPoints);
-		Assertions.assertSame(prizeSkill, attacker.rewardSkill);	
+		Assertions.assertFalse(defender.hasPenalizeMethodBeenCalled);	
+		Assertions.assertFalse(defender.hasRewardMethodBeenCalled);	
 	}
 
 }
